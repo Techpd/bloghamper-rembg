@@ -1,4 +1,5 @@
-from flask import Flask, request, send_file
+import os
+from flask import Flask, request, send_file, jsonify
 from rembg import remove
 from flasgger import Swagger, swag_from
 import io
@@ -11,7 +12,11 @@ swagger = Swagger(app)
 # Enable CORS for all routes
 CORS(app)
 
-@app.route('/rmbg/', methods=['POST'])
+# Specify folder for temporary files
+upload_folder = 'uploads'
+os.makedirs(upload_folder, exist_ok=True)
+
+@app.route('/rmbg/', methods=['POST'])  # Ensure the method is POST
 @swag_from({
     'tags': ['Image Processing'],
     'description': 'Removes background from an image and converts it to WebP format',
@@ -46,17 +51,22 @@ CORS(app)
 })
 def remove_bg():
     if 'file' not in request.files:
-        return {'error': 'No file part'}, 400
+        return jsonify({'error': 'No file part'}), 400
 
     file = request.files['file']
     if file.filename == '':
-        return {'error': 'No selected file'}, 400
+        return jsonify({'error': 'No selected file'}), 400
 
     try:
-        # Read the input image file
-        input_image = file.read()
+        # Save the uploaded file to the specified folder
+        file_path = os.path.join(upload_folder, file.filename)
+        file.save(file_path)
 
-        # Process the image to remove background
+        # Process the image
+        with open(file_path, 'rb') as f:
+            input_image = f.read()
+
+        # Remove background from the image
         output_image = remove(input_image)
 
         # Create a BytesIO object to handle image data
@@ -76,7 +86,11 @@ def remove_bg():
             download_name='output.webp'
         )
     except Exception as e:
-        return {'error': str(e)}, 500
+        # Log the error
+        print(f"Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
+    # Run the Flask app
     app.run(debug=True, host='0.0.0.0', port=5000)

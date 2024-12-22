@@ -1,3 +1,6 @@
+python3==3.9.20
+pip3==21.3.1
+flask-cors==5.0.0
 Flask==2.3.2
 flasgger==0.9.5
 rembg==2.0.32
