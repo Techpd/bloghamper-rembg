@@ -5,6 +5,7 @@ from flasgger import Swagger, swag_from
 import io
 from PIL import Image
 from flask_cors import CORS  # Import Flask-CORS
+from flask_cors import cross_origin
 
 app = Flask(__name__)
 swagger = Swagger(app)
@@ -17,6 +18,7 @@ upload_folder = 'uploads'
 os.makedirs(upload_folder, exist_ok=True)
 
 @app.route('/rmbg/', methods=['POST'])  # Ensure the method is POST
+@cross_origin(origin='*', headers=['Content-Type', 'Authorization'])  # Allow all origins
 @swag_from({
     'tags': ['Image Processing'],
     'description': 'Removes background from an image and converts it to WebP format',
@@ -75,7 +77,7 @@ def remove_bg():
 
         # Convert image to WebP format
         output_io = io.BytesIO()
-        img.save(output_io, format='WEBP', quality=80, lossless=True)  # Save as WebP with transparency and lossless option
+        img.save(output_io, format='WEBP', quality=80, lossless=True)  # Save as WebP, not jpg
         output_io.seek(0)
 
         # Send the processed image file back as a response
