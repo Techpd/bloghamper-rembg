@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Background Remover</title>
+</head>
+<body>
+  <h1>Background Remover</h1>
+  <p>Upload an image to remove its background and convert it to WebP format:</p>
+
+  <!-- File input for uploading an image -->
+  <input type="file" id="fileInput" accept="image/*" />
+
+  <!-- Button to trigger the API call -->
+  <button id="processButton">Process Image</button>
+
+  <!-- Area to show error messages or instructions -->
+  <p id="message"></p>
+
+  <script>
+    const processButton = document.querySelector('#processButton');
+    const fileInput = document.querySelector('#fileInput');
+    const message = document.querySelector('#message');
+
+    processButton.addEventListener('click', () => {
+      // Ensure a file is selected
+      if (!fileInput.files[0]) {
+        message.textContent = 'Please select an image file first.';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      fetch('http://127.0.0.1:5000/rmbg/', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json', // Ensure the server knows the expected response type
+        },
+        body: formData,
+      })
+        .then(response => {
+          if (response.ok) {
+            return response.blob();
+          } else {
+            throw new Error('Failed to process the image');
+          }
+        })
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'output.webp'; // Download the processed image
+          link.click();
+          message.textContent = 'Image processed successfully! Download started.';
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          message.textContent = 'Error processing the image. Please try again.';
+        });
+    });
+  </script>
+</body>
+</html>
